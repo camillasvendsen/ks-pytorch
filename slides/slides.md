@@ -742,7 +742,7 @@ class: exercise
 
 `oppgaver/05_nevralt_nettverk.ipynb`
 
-Trening nettverk med flere lag, sammenligning modeller og feilanalyse
+Trening av nettverk med flere lag, sammenligning av modeller og feilanalyse
 
 <!--
 -->
