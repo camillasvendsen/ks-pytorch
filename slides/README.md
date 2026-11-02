@@ -1,7 +1,7 @@
 # Forelesning: PyTorch 101
 
 En norsk Slidev-presentasjon som følger notatbok 01–05, med overgang til det
-valgfrie prosjektet i 06. 32 lysbilder, med omtrent 50–60 minutter forelesning fordelt på fem
+valgfrie prosjektet i 06. 36 lysbilder, med omtrent 50–60 minutter forelesning fordelt på fem
 bolker, avhengig av spørsmål og tempo. Oppgavearbeidet kommer mellom bolkene.
 
 ## Kjøring
@@ -46,12 +46,15 @@ trenger mer tid, flytt 04 til starten av dag 2 og kort ned bonusarbeidet.
 Start dag 2 med å la studentene forklare de fem stegene i treningsløkken.
 
 De grønne oppgaveslidene er stoppunkter. La studentene jobbe før neste bolk.
+Etter notatbok 01, 03 og 04 følger et kontrollspørsmål. Sett av 30–60 sekunder
+til diskusjon i par, og gjennomgå svaret muntlig. Fasit står i forelesernotatene.
 HTML-kommentarene i `slides.md` er korte norske forelesernotater. Praktiske tidsanslag og gjennomføringsråd står her i
 veiledningen. Lysbildene introduserer begrepene før kodeeksemplene; de er ikke
 en gjennomgang av hver oppgavecelle eller en sammenhengende Python-fil.
 Korte PyTorch-eksempler knytter teorien til syntaksen. Fullstendige løkker,
 utregninger og API-detaljer utforskes i notatbøkene, som også er stedet for
-kjøring og demonstrasjoner. Nettverk introduseres som helhet før vektede summer.
+kjøring og demonstrasjoner. Nettverk introduseres som helhet før vektede summer. Beregningen i ett nevron
+introduseres med en generell formel før det numeriske nettverkseksemplet.
 
 Hold hovedinnstillingene lik notatbøkene: 20 000 treningsbilder, 1 000 testbilder,
 batchstørrelse 64, Adam med læringsrate 0.001 og 25 epoker. Nettverket har 128
@@ -82,6 +85,7 @@ Tekst, manus og illustrasjoner er laget for dette kurset. Supplerende dokumentas
 
 ## Visuelle forklaringer
 
+- `components/SingleNeuron.vue`: innganger, vekter, bias og aktivering for ett nevron.
 - `components/NetworkDiagram.vue`: fullkoblet 3–4–2-nettverk med beregnede
   verdier og valg av skjult nevron. Konstruerte vekter, ikke en trent modell.
 - `components/PixelValues.vue`: sammenheng mellom gråtone, råverdi og skalering.

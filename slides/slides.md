@@ -1,7 +1,7 @@
 ---
 theme: default
 title: PyTorch 101
-info: 32 lysbilder med forelesernotater. Omtrent 50–60 minutter, fordelt over kurset.
+info: 36 lysbilder med forelesernotater. Omtrent 50–60 minutter, fordelt over kurset.
 class: cover
 colorSchema: light
 aspectRatio: 16/9
@@ -20,10 +20,27 @@ drawings:
 
 # PyTorch 101
 
-<div class="lead">Tensorer, bildeklassifikasjon og nevrale nettverk</div>
+<div class="lead">Tensorer, nevrale nettverk og bildeklassifikasjon</div>
 
 <!--
-Målet er å bygge og forstå en liten bildemodell. Vi tar teorien i fem korte bolker og bruker den med en gang i notatbøkene. Start med helheten før detaljene.
+PyTorch - et rammeverk i python for å jobbe med nevrale nett og dyp læring.
+Vi skal gå gjennom:
+
+* De grunnleggende byggesteinene i pytorch
+* En liten recap på matriser, med dimensjoner og hvordan de ganges sammen
+* Bittelitt bildebehandling
+* Bygge og trene en modell på et datasett
+
+Hvorfor?
+
+* Anthropic og OAI bruker Pytorch til å lage claude og gpt!
+* Veldig relevant for analyse av satelittbilder, dronebilder osv
+* Veldig kult
+
+Quiz
+
+* Hvem har hørt om dyp læring før?
+* Er vi komfortable med å gange sammen 2 matriser?
 -->
 
 ---
@@ -34,12 +51,15 @@ Målet er å bygge og forstå en liten bildemodell. Vi tar teorien i fem korte b
 
 <div class="flow"><div class="box">Bilde</div><span>→</span><div class="box">Modell</div><span>→</span><div class="box">Ti klasseskårer</div><span>→</span><div class="box">Predikert klasse</div></div>
 
-Modellen trenes på merkede bilder og evalueres på et separat testsett.
 
-<div class="small">Fashion-MNIST · Zalando Research · MIT</div>
+<div class="small">Fashion-MNIST · Zalando Research</div>
 
 <!--
-Modellen skal skille klær, sko og vesker i ti klasser. Vi skriver ikke regler for hvert plagg. Vi bruker eksempler med fasit til å tilpasse modellen. Noen klasser ligner hverandre, så vi skal også undersøke feilene.
+Casen vi skal jobbe med i dag og i morgen
+
+* skal skille klær, sko og vesker i ti klasser.
+* For å gjøre det: trene en modell som bruker treningsdata (altså eksempler med (bilde, fasit)-par)
+* Fashio-MNIST fra zalando research
 -->
 
 ---
@@ -55,18 +75,70 @@ Ulineære aktiveringsfunksjoner mellom lagene gjør at nettverket kan represente
 <div class="note">PyTorch gir oss tensorer, modellag og automatisk beregning av gradienter.</div>
 
 <!--
-Et nettverk er en sammensatt funksjon med justerbare parametere. Skjult betyr at vi ikke gir mellomverdiene en egen fasit. Treningen justerer vektene ut fra sluttresultatet. Vi begynner med en enklere lineær modell for å lære delene, og kommer tilbake til nettverket i siste bolk.
+Hva er et nevralt nett?
+Kort sagt:
+
+* En funksjonsapproksimator
+* Her: å tilpasse en funksjon som mapper bilder til en klasse (tall fra 0-9)
+* Består av lærbare parametre: vekter og bias, organisert i et valgfritt antall lag
+* Ulineære aktiveringsfunksjoner som lar nettverket representere ulineære sammenhenger
+* Pytorch gir oss en del primitiver som er greie å jobbe med: tensorer, forhåndsdefinerte lag, tapsfunksjoner og viktigst: automatisk beregning av gradienter
+
+Dette kommer vi tilbake til
+
 -->
 
 ---
 
-# Nevroner, vekter og aktiveringer
+# Ett nevron
+
+<div class="grid grid-cols-[1.15fr_1fr] gap-8 items-center mt-10">
+<div>
+
+<SingleNeuron />
+
+</div>
+<div>
+
+**Vektet sum + bias**
+
+$$
+z = \sum_{i=1}^{D} w_i x_i + b
+  = \mathbf{w}^{\mathsf T}\mathbf{x} + b
+$$
+
+**Aktivering**
+
+$$
+h = \operatorname{ReLU}(z) = \max(0, z)
+$$
+
+</div>
+</div>
+
+<!--
+Eksempel med ett nevron fra et nettverk
+
+* Vi gjør en vektet sum av innganger og legger til en bias for å produsere z
+* Kjører z gjennom en ulineær aktiveringsfunksjon og får h, som er utgangen
+* Altså: x_1*w_1 + x_2*w_2 + ... + x_D*w_D + b, også max av det
+-->
+
+---
+
+# Eksempel
 
 <NetworkDiagram />
 
 
 <!--
-Sirklene inneholder verdier som beregnes for ett eksempel. Linjene representerer vekter, som er modellparametere. Velg et skjult nevron med knappene for å se dets inngående vekter og beregning. Linjetykkelsen viser absoluttverdien til vekten, og fargen viser fortegnet. Alle forbindelser til utgangene er tegnet nøytralt. Utgangene er merket z1 og z2; utregningen viser bare det valgte skjulte nevronet. Vektetikettene følger de tre inngangene ovenfra og ned. Bias vises ved siden av nevronvalget. Først beregnes den vektede summen z, deretter aktiveringen h. Verdiene endres med inndata; vektene endres under trening. ReLU-verdier er ikke begrenset til én, og utgangene er rå skårer. Diagramideen er inspirert av 3Blue1Browns introduksjon, men beregningen og figuren er laget for dette kurset.
+Eksempel:
+
+* 3 innganger, 4 utganger
+
+For første nevron i det skjulte laget:
+
+* følg eksempelet
 -->
 
 ---
@@ -87,7 +159,9 @@ values.shape  # torch.Size([2, 3])
 ```
 
 <!--
-Tensor er fellesnavnet for tall organisert langs null eller flere akser. Formen forteller hvor mange verdier hver akse har. Skill mellom antall akser og antall tall. PyTorch bruker samme datatype for disse strukturene.
+Vi hopper tilbake til den grunnleggende enheten i Pytorch: Tensorer.
+
+Tensor er fellesnavnet for tall organisert langs null eller flere akser. Formen/dimensjonen forteller hvor mange verdier hver akse har.
 -->
 
 ---
@@ -107,7 +181,15 @@ values + 2                 # Legg 2 til hvert tall
 `shape`: organisering · `dtype`: talltype · `device`: CPU eller GPU
 
 <!--
-Radene kan være eksempler og kolonnene målinger. Indekser starter på null. Ved gjennomsnitt over dim én forsvinner kolonneaksen, og vi får ett tall per rad. Vi bruker desimaltall for beregningene og heltall for klasseindekser. Detaljene prøver dere selv.
+Tensorer indekseres omtrent som vanlige python-lister:
+
+* index 0 gir første rad
+* bruk slicing for å hente ut kolonne 2 med index 1
+
+Tensorer har en rekke metoder, feks:
+
+* .mean() regner ut gjennomsnitt
+* ved å oppgi dim=1, summerer vi over kolonnene, og ender opp med ett tall per rad
 -->
 
 ---
@@ -128,10 +210,18 @@ Elementet $C_{ik}$ er prikkproduktet av rad $i$ i $A$ og kolonne $k$ i $B$.
 result = inputs @ weights
 ```
 
-NB: Husk dimensjoner!
-
 <!--
-Pek på aksen D som summeres bort. B kan være antall eksempler, D antall innganger og K antall utganger. Formelen beskriver hvert enkelt tall i resultatet. Vi trenger bare ett konkret eksempel før dere prøver selv.
+Dyp læring handler i stor grad om å gange sammen matriser, så det må vi kunne.
+Her er formelen. La oss si vi har 2 matriser, A og B, og lar C=AB.
+Da er hvert element i C, C_ik prikkproduktet av rad _i_ i A med kolonne k i B.
+
+Noe av det viktigste rent praktisk er å forstå dimensjonene til matriser som skal ganges sammen.
+Altså, hvorfor noe funker, og noe gir feilmeldinger om upassende dimesjoner. Det skal dere få jobbe med etterpå.
+Men greia er:
+
+* B,D-matrise, ganger D,K-matrise, gir en B,K-matrise.
+
+I PyTorch bruker vi @, eller .dot()
 -->
 
 ---
@@ -155,7 +245,6 @@ result = inputs @ weights  # Form [2, 2]
 **`@`** beregner matriseprodukt. **`*`** ganger elementvis.
 
 <!--
-Vis bare beregningen av øverste venstre tall. Resten følger samme regel. To eksempler med tre innganger blir to eksempler med to utganger. Elementvis gange er en annen operasjon; disse to formene passer heller ikke sammen for elementvis gange.
 -->
 
 ---
@@ -169,7 +258,24 @@ class: exercise
 Indeksering, reduksjoner, broadcasting og matrisemultiplikasjon.
 
 <!--
-Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i notatboken ved behov.
+-->
+
+---
+
+# Quiz
+
+`scores` har formen `[32, 10]`: 32 bilder og 10 klasseskårer per bilde.
+
+```python
+predictions = scores.argmax(dim=1)
+```
+
+Hva blir dimensjonene til `predictions`, og hva betyr tallene?
+
+<!--
+Diskuter med sidemannen.
+Svar: Formen er [32]. Hver verdi er indeksen til klassen med høyest skår for ett bilde, altså et heltall fra 0 til 9. Vi velger langs klasseaksen, dim=1.
+Valgfritt oppfølgingsspørsmål: Hva gir argmax(dim=0)? Formen blir [10], med indeksen til bildet med høyest skår for hver klasse, ikke én prediksjon per bilde.
 -->
 
 ---
@@ -197,7 +303,7 @@ Et RGB-bilde: `[3, H, W]`
 </div></div>
 
 <!--
-Koble tallene i rutenettet til lysstyrkene. Kanalaksen kommer først i bildene vi bruker. Et RGB-bilde har tre kanaler. I notatboken endrer dere en piksel og ser hva som skjer.
+Et digitalt bilde er bare en matrise med lysintensiteter. Her ser vi på en kanal av et bilde. 
 -->
 
 ---
@@ -215,7 +321,10 @@ pixels = raw_pixels.float() / 255
 Skalering endrer tallområdet, men bevarer relative lysstyrker.
 
 <!--
-Dra i skyveknappen og sammenlign gråtonen med råverdien og den skalerte verdien. Dette er samme operasjon som ToTensor utfører for råbildene i Fashion-MNIST. Skillet mellom datatype og skala er viktig: float alene deler ikke på 255. Verdien 128 blir omtrent 0,502. PDF-en viser startverdien 204.
+Bilder er på 0-255 fordi de lagres som 8-bit heltall
+
+Vi skal jobbe med skalaen 0-1, derfor deler vi på 255.
+0=svart, 1=hvitt
 -->
 
 ---
@@ -233,7 +342,10 @@ blue = image[2]   # [H, W]
 Fashion-MNIST har én gråtonekanal: `[1, 28, 28]`.
 
 <!--
-Dette er et konstruert RGB-bilde med to ganger to piksler. Hver kanal er en matrise, og verdier på samme posisjon beskriver samme piksel. Øverste venstre piksel har R=224, G=96 og B=48. I figuren vises råverdier; etter skalering deles hver kanal på 255. Indekseringen i koden gjelder et RGB-bilde, ikke Fashion-MNIST.
+Her er et RGB bilde med 4 piksler, og 3 kanaler (RGB).
+Hver kanal er en matrise.
+
+Dette er altså en matrise med 3 dimensjoner: dybde, høyde og bredde.
 -->
 
 ---
@@ -254,7 +366,12 @@ image.squeeze(0).shape  # [28, 28], for visning med imshow
 | `H, W` | Høyde og bredde i piksler |
 
 <!--
-Skillet mellom en kanalakse og en batchakse er ofte vanskelig i starten. En ekstra akse endrer ikke pikselverdiene. Squeeze med eksplisitt akse null fjerner bare den ene gråtonekanalen. Batchen samler flere separate bilder; den endrer ikke oppløsningen. DataLoader i neste bolk viser hvordan slike batcher opprettes.
+Vi skal jobbe med 4 dimensjoner, bare for å gjøre det enda vanskeligere :)
+
+Så vi skal jobbe med mange bilder samtidig, feks 64.
+Da får vi 64 bilder, som hver har 1 fargekanal, og 28x28 piksler.
+
+Det første tallet kalles for batch-size.
 -->
 
 ---
@@ -274,14 +391,16 @@ CLASS_NAMES[label]   # Navnet på riktig klasse
 
 
 <!--
-Dette er kursets faste utvalg. Et datasett gir oss et bilde og en etikett. Etiketten er et heltall fra null til ni. Klassefordelingen gir en nyttig referanse: hvor godt kan vi gjøre det bare ved å gjette den vanligste klassen?
+Som sagt jobbe med et kles-datasett. Vi har 10 klasser, 20k treningsbilder og 1k testbilder.
+
+Vi har laget ferdig kode som laster ned og pakker datasettet for dere.
 -->
 
 ---
 
 # Klassefordeling og referansenøyaktighet
 
-Et tenkt datasett med 100 bilder:
+Anta 100 bilder:
 
 | Klasse | Antall |
 |---|---:|
@@ -296,7 +415,13 @@ baseline_accuracy = max(class_counts) / sum(class_counts)
 ```
 
 <!--
-Samlet nøyaktighet må tolkes i lys av klassefordelingen. Her er 80 prosent mulig uten å bruke bildene i det hele tatt. I notatboken beregnes flertallsklassen og dens nøyaktighet på treningsutvalget. For en testreferanse velges klassen fra trening, og treffandelen måles separat på testdata. Tilfeldig, uniform gjetting blant ti klasser har forventet nøyaktighet 10 prosent.
+Et par ord om nøyaktighet:
+
+Anta vi har 100 bilder, hvor 80 av dem tilhører en klasse. 
+
+Da vil en modell som alltid gjetter tskjorte få 80% nøyaktighet.
+
+Samlet nøyaktighet må tolkes i lys av klassefordelingen.
 -->
 
 ---
@@ -315,7 +440,7 @@ Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i n
 
 ---
 
-# Batcher og DataLoader
+# Batching og DataLoader
 
 ```python
 from torch.utils.data import DataLoader
@@ -331,7 +456,10 @@ labels.shape  # [64]
 `shuffle=True` stokker rekkefølgen for hver gjennomgang.
 
 <!--
-Batchaksen skiller bildene fra hverandre. Vi bruker de samme modellvektene på alle bildene. Den siste batchen kan være mindre. Dette er første gang studentene trenger DataLoader, i notatbok 03.
+Vi skal som nevnt jobbe med batches (altså mange bilder i parallell). 
+
+Bruker dataloaders til dette.
+Datasett henter enkelt-eksempler; Dataloader samler mange eksempler i batches.
 -->
 
 ---
@@ -356,7 +484,10 @@ scores = flat_images @ weights + bias
 **Vekter** bestemmer bidragene. **Bias** gir ett konstantledd per klasse.
 
 <!--
-Hver rad er ett bilde, og hver kolonne i resultatet er en klasse. Utflating beholder alle pikselverdiene og batchaksen. Her gjenkjenner vi matriseproduktet fra første bolk. Vektene er tilfeldige og modellen har ennå ikke lært.
+Vi skal jo trene en ML-modell. 
+Modellene vi skal lage, kan ikke regne på romlige bilder direkte, så vi må flate de ut. 
+Fra 28x28 til 784.
+Da bruker vi flatten, og ganger sammen på vanlig måte
 -->
 
 ---
@@ -373,12 +504,18 @@ predictions = scores.argmax(dim=1) # [B]
 
 **`nn.Linear`** eier vekter og bias. **`nn.Sequential`** setter lag i rekkefølge.
 
-Skårene kalles **logits** og er ikke sannsynligheter. Predikert klasse er indeksen til den høyeste skåren.
+Skårene kalles **logits**. 
+
+Predikert klasse er indeksen til den høyeste skåren.
 
 Nøyaktighet = antall riktige / antall eksempler.
 
 <!--
-Linear gjør den samme beregningen som vi nettopp skrev for hånd. Argmax velger klassekolonnen med størst skår for hvert bilde. Softmax kan gjøre skårene om til sannsynligheter, men er ikke nødvendig for å velge vinneren. Notatboken undersøker også antall parametere.
+Pytorch gir oss slike lineære lag gratis, med lærbare parametre.
+Linear gjør den samme beregningen som vi nettopp skrev for hånd. 
+Argmax velger klassekolonnen med størst skår for hvert bilde.
+
+Vi kan så regne ut nøyaktigheten ved å ta antall riktige delt på antall eksempler.
 -->
 
 ---
@@ -392,7 +529,20 @@ class: exercise
 Vektede summer, klasseskårer og en lineær modell med `nn.Linear`.
 
 <!--
-Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i notatboken ved behov.
+-->
+
+---
+
+# Quiz
+
+En modell gir ti klasseskårer for hvert bilde. 
+
+**Er disse sannsynligheter?**
+
+**Hvorfor kan vi likevel bruke argmax til å velge klasse?**
+
+<!--
+The scores are logits—they can be negative and don’t necessarily sum to one. argmax selects the highest score; converting to probabilities with softmax would preserve that ordering
 -->
 
 ---
@@ -408,7 +558,17 @@ Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i n
 Treningen justerer parameterne for å redusere tapet på treningsdataene.
 
 <!--
-Start med tilfeldige vekter. Tapsfunksjonen gir et signal om hvor godt skårene passer til fasiten. Vi gjentar små oppdateringer på batcher. Backward regner ut gradienter; optimizer bruker dem til å endre parameterne.
+Nå skal vi begynne å trene modellen.
+En PyTorch treningsløkke ser omtrent sånn her ut:
+
+Forward pass:
+
+* Kjør input gjennom modellen og regn ut tap mot faisten.
+
+Backward pass
+* Beregn gradienten til tapet med hensyn på alle parameterne.
+
+Til slutt: Juster vekter og bias med en optimaliseringsteknikk
 -->
 
 ---
@@ -427,10 +587,12 @@ loss_fn = nn.CrossEntropyLoss()
 loss = loss_fn(scores, labels)
 ```
 
-Send **rå skårer** `[B, 10]` og **klasseindekser** `[B]` inn i tapsfunksjonen.
-
 <!--
-Begge prediksjonene er riktige, men den andre støtter fasiten sterkere. Tabellen viser sannsynligheter for å forklare tapet. I koden sender vi logits direkte til CrossEntropyLoss, uten softmax eller argmax. Etikettene er int64. Resultatet er ett gjennomsnittlig tapstall for batchen.
+Vi skal bruke kryssentropi som tap i dag.
+Så anta at vi har 2 korrekte prediksjoner. 
+Den ene er 60% sikker, den andre 90%. 
+
+Selv om begge har rett, vil tapet være vesentlig større i det første tilfellet.
 -->
 
 ---
@@ -451,10 +613,12 @@ $$
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 ```
 
-Vi bruker **Adam**, som også tar hensyn til tidligere gradienter.
+Vi bruker **Adam**, en populær optimizer.
 
 <!--
-Hvis gradienten er positiv, kan vi prøve å senke parameteren for å redusere tapet lokalt. Vi trenger ikke derivere nettverket for hånd: PyTorch gjør det. Formelen viser enkel gradient descent, ikke hele Adam-regelen. Et enkelt steg garanterer ikke bedre ytelse på usette data.
+Gradienter brukes for å justere parameterne i nettverket (vekter og bias).
+
+Formelen for å justere en parameter gitt en gradient er som følger, mest for at dere skal ha sett det.
 -->
 
 ---
@@ -473,33 +637,16 @@ optimizer.step()               # Oppdater vekter og bias
 
 **Epoke:** én gjennomgang av treningsutvalget.
 
-I oppgavene: batchstørrelse **64**, **25** epoker.
-
 <!--
-Vis sammenhengen mellom teorien og de fem linjene. Nullstillingen fjerner gamle gradienter, ikke vektene. PyTorch akkumulerer ellers gradientene. Studentene bygger selv løkkene rundt dette i notatbok 04. Bruk ikke tid på å skrive hele løkken på tavlen.
+I kode ser det ca sånn ut:
+
+* Nullstill gamle gradienter
+* Kjør input gjennom modell
+* Regn ut avviket mellom prediksjon og fasit
+* Regn nye gradienter
+* Oppdater parametre
 -->
 
----
-
-# Evaluering på testdata
-
-```python
-model.eval()
-with torch.no_grad():
-    scores = model(images)
-    predictions = scores.argmax(dim=1)
-    accuracy = (predictions == labels).float().mean().item()
-```
-
-Her er `images` og `labels` en **testbatch**. Hele testsettet må evalueres.
-
-**`eval()`** velger evalueringsmodus. **`no_grad()`** slår av gradientregistrering.
-
-Ingen parameteroppdateringer på testdata.
-
-<!--
-Dette viser evaluering på én batch, ikke hele testnøyaktigheten. Studentene samler antall riktige over alle testbatchene. Eval og no_grad har forskjellige roller. For våre enkle lag endrer ikke eval selve beregningen, men mønsteret er nyttig for andre lagtyper også.
--->
 
 ---
 class: exercise
@@ -512,7 +659,23 @@ class: exercise
 Treningsløkke, tapskurve og testnøyaktighet for den lineære modellen.
 
 <!--
-Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i notatboken ved behov.
+-->
+
+---
+
+# Quiz
+
+```python
+loss.backward()
+optimizer.step()
+```
+
+**Hva er forskjellen mellom disse to kallene?**
+
+Hva beregnes, og når endres modellens parametere?
+
+<!--
+Svar: loss.backward() beregner gradientene til tapet med hensyn på modellens parametere og akkumulerer dem i parameter.grad. Kallet oppdaterer ikke vekter eller bias. optimizer.step() bruker gradientene til å oppdatere parameterne etter optimizerens regel, her Adam.
 -->
 
 ---
@@ -533,7 +696,8 @@ model = nn.Sequential(
 Det skjulte laget lærer **mellomliggende representasjoner**.
 
 <!--
-Knytt dette til oversiktsbildet fra starten. Hvert skjult nevron beregner en vektet sum og bruker en aktivering. Vi gir ikke laget egen fasit; begge lagenes vekter læres fra klassifikasjonstapet. Utgangen er fortsatt ti rå skårer.
+Til nå: lineær modell.
+Nå skal vi legge til et skjult lag, og ulineære aktiveringsfunksjoner.
 -->
 
 ---
@@ -559,35 +723,12 @@ ReLU endrer ikke formen og har ingen parametere som læres. Flere knekkpunkter k
 
 ---
 
-# Trening og sammenligning av modeller
-
-```python
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-```
-
-Opprett optimizer med **parameterne til den nye modellen**.
-
-Treningsstegene og tapsfunksjonen er de samme.
-
-Sammenlign med den lineære modellen:
-
-- Nøyaktighet på usette bilder
-- Treningstid
-- Hvilke klasser modellen forveksler
-
-<!--
-Notatbok 05 samler trening og evaluering i funksjoner, slik at de kan gjenbrukes. Hold hovedinnstillingene faste. La studentene regne parameterantallet selv. Ett forsøk er ikke nok til å si at én modelltype alltid er best.
--->
-
----
 
 # Overtilpasning og generalisering
 
 <LearningCurves />
 
 **Trening:** lær parametere · **Validering:** velg modell · **Test:** sluttvurdering
-
-<div class="small">Skjematiske kurver. Kurset bruker faste hovedinnstillinger og separate trenings- og testutvalg.</div>
 
 <!--
 Når treningstapet synker mens valideringstapet øker, kan det være overtilpasning. En treningskurve alene kan ikke avgjøre dette. Vi har ikke et eget valideringssett i hovedoppgavene. Før systematisk modellvalg bør vi sette av valideringsdata, i stedet for å velge etter testresultatene.
@@ -601,12 +742,9 @@ class: exercise
 
 `oppgaver/05_nevralt_nettverk.ipynb`
 
-Trening av nettverket, sammenligning med den lineære modellen og feilanalyse med forvekslingsmatrise.
-
-8 skjulte nevroner og prosjektet i `06_bonus.ipynb` er valgfrie.
+Trening nettverk med flere lag, sammenligning modeller og feilanalyse
 
 <!--
-Stopp forelesningen her og la studentene arbeide. Bruk eksemplene og hintene i notatboken ved behov.
 -->
 
 ---
